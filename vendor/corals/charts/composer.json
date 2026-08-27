@@ -1,0 +1,31 @@
+{
+  "name": "corals/charts",
+  "description": "The laravel charting package",
+  "license": "MIT",
+  "type": "library",
+  "require": {
+    "php": ">=7.0",
+    "illuminate/support": "^5.0|^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+    "illuminate/console": "^5.0|^6.0|^7.0|^8.0|^9.0|^10.0|^11.0",
+    "balping/json-raw-encoder": "^1.0"
+  },
+  "authors": [
+    {
+      "name": "Corals",
+      "email": "info@corals.io"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "ConsoleTVs\\Charts\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "ConsoleTVs\\Charts\\ChartsServiceProvider"
+      ]
+    }
+  },
+  "minimum-stability": "dev"
+}

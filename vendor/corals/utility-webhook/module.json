@@ -1,0 +1,16 @@
+{
+    "code": "corals-utility-webhook",
+    "name": "Utility Webhook",
+    "author": "Corals",
+    "type": "module",
+    "description": "Utility Webhook",
+    "namespace": "Corals\\Utility\\Webhook",
+    "provider": "UtilityWebhookServiceProvider",
+    "version": "10.0.0",
+    "load_order": "0",
+    "folder": "utility-webhook",
+    "icon": "fa fa-anchor",
+    "require": {
+        "corals-utility": "^10.0.0"
+    }
+}

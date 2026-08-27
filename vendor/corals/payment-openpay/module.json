@@ -1,0 +1,19 @@
+{
+    "code": "corals-payment-openpay",
+    "name": "Openpay Payment Gateway",
+    "author": "Corals",
+    "type": "payment",
+    "description": "Payment Gateway, charges, subscriptions, invoices...",
+    "namespace": "Corals\\Modules\\Payment\\Openpay",
+    "provider": "OpenpayServiceProvider",
+    "version": "10.0.0",
+    "folder": "payment-openpay",
+    "autoload": "psr-4",
+    "icon": "fa fa-credit-card",
+    "require": {
+        "corals-payment": "^10.0.0"
+    },
+    "supported_platforms": [
+        "Ecommerce"
+    ]
+}

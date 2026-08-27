@@ -1,0 +1,22 @@
+{
+    "code": "corals-payment-paypal",
+    "name": "PayPal Payment Gateway",
+    "author": "Corals",
+    "type": "payment",
+    "description": "Payment Gateway, charges, subscriptions, invoices...",
+    "namespace": "Corals\\Modules\\Payment\\PayPal",
+    "provider": "PayPalServiceProvider",
+    "version": "10.0.0",
+    "folder": "payment-paypal",
+    "autoload": "psr-4",
+    "icon": "fa fa-cc-paypal",
+    "require": {
+        "corals-payment": "^10.0.0"
+    },
+    "supported_platforms": [
+        "Ecommerce",
+        "Marketplace",
+        "Subscription",
+        "Reservation"
+    ]
+}

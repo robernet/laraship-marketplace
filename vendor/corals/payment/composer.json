@@ -1,0 +1,55 @@
+{
+    "name": "corals/payment",
+    "description": "Payment",
+    "keywords": [
+        "corals",
+        "Payment"
+    ],
+    "homepage": "https://github.com/coralsio/payment",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "corals",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Corals\\Modules\\Payment\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9",
+        "laravel/pint": "^1.0"
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/pest --coverage",
+        "format": "vendor/bin/php-cs-fixer fix --allow-risky=yes"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Corals\\Modules\\Payment\\PaymentServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php-http/client-common": "^2.0",
+        "php-http/guzzle7-adapter": "0.1.1",
+        "php-http/message": "^1.5",
+        "php-http/discovery": "^1.2.1",
+        "moneyphp/money": "^3.1",
+        "psr/http-client": "^1.0",
+        "laravel-validation-rules/credit-card": "^1.3"
+    },
+    "minimum-stability": "dev"
+}

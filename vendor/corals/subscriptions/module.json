@@ -1,0 +1,26 @@
+{
+    "code": "corals-subscriptions",
+    "name": "Subscriptions Manager",
+    "author": "Corals",
+    "type": "module",
+    "description": "Manage Subscriptions, products, plans...",
+    "namespace": "Corals\\Modules\\Subscriptions",
+    "provider": "SubscriptionsServiceProvider",
+    "version": "10.0.5",
+    "load_order": "600",
+    "folder": "Subscriptions",
+    "autoload": "psr-4",
+    "icon": "fa fa-id-card-o",
+    "require": {
+        "corals-foundation": "^10.0.0",
+        "corals-payment": "^10.0.0",
+        "corals-user": "^10.0.0",
+        "corals-settings": "^10.0.0",
+        "corals-cms": "^10.0.0"
+    },
+    "platform": "Subscription",
+    "supported_platforms": [
+        "Marketplace",
+        "Classified"
+    ]
+}

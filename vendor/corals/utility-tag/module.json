@@ -1,0 +1,16 @@
+{
+    "code": "corals-utility-tag",
+    "name": "Utility Tag",
+    "author": "Corals",
+    "type": "module",
+    "description": "Utility Tags",
+    "namespace": "Corals\\Utility\\Tag",
+    "provider": "UtilityTagServiceProvider",
+    "version": "10.0.0",
+    "load_order": "0",
+    "folder": "utility-tag",
+    "icon": "fa fa-tags",
+    "require": {
+        "corals-utility": "^10.0.0"
+    }
+}

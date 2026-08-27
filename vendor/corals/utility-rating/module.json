@@ -1,0 +1,17 @@
+{
+    "code": "corals-utility-rating",
+    "name": "Utility Ratings",
+    "author": "Corals",
+    "type": "module",
+    "description": "Utility Ratings",
+    "namespace": "Corals\\Utility\\Rating",
+    "provider": "UtilityRatingServiceProvider",
+    "version": "10.0.0",
+    "load_order": "0",
+    "folder": "utility-rating",
+    "icon": "fa fa-star",
+    "require": {
+        "corals-utility-comment": "^10.0.0",
+        "corals-utility": "^10.0.0"
+    }
+}

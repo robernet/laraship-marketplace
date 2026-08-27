@@ -1,0 +1,6 @@
+{
+  "require": {
+    "openpay/sdk": "^3.0",
+    "corals/payment": "@dev"
+  }
+}
