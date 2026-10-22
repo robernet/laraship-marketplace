@@ -24,8 +24,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // Renewal invoices and expiry of subscriptions on self-managed gateways (Cash). Stripe renews on its own.
+        // Needs the system cron for `schedule:run`. Change the timezone to the one of the audience.
+        $schedule->command('subscription:checkup')->timezone('America/Mexico_City')->dailyAt('03:00')->withoutOverlapping();
     }
 
     /**

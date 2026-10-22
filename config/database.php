@@ -52,6 +52,9 @@ return [
             'prefix' => '',
             'strict' => false,
             'engine' => null,
+            // The app runs in UTC; without this MySQL answers NOW() and fills CURRENT_TIMESTAMP defaults
+            // (useCurrent() columns) in the server's local time, hours off from everything Laravel writes.
+            'timezone' => '+00:00',
         ],
 
         'pgsql' => [
