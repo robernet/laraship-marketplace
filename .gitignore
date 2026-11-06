@@ -17,3 +17,14 @@ yarn-error.log
 /public/uploads/submissions/
 .phpstorm.meta.php
 _ide_helper.php
+
+# Composer credentials (see auth.json.example)
+auth.json
+
+# Claude Code runtime state
+.claude/scheduled_tasks.lock
+
+# Local tooling state
+/graphify-out
+/.phpunit.cache
+/.phpunit.result.cache

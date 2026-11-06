@@ -1,259 +1,303 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repository.
+
+<!--
+  MAINTENANCE NOTES (stripped before this file enters context — free to keep here)
+
+  Behavioral rules — scope discipline, evidence over claims, output style — live in
+  ~/.claude/CLAUDE.md plus one model overlay (model/opus5.md | fable5.md | sonnet5.md).
+  They are deliberately NOT repeated here. Two copies drift, and when two loaded rules
+  contradict each other Claude picks one arbitrarily.
+
+  Verify both loaded: /context → "Memory files". If ~/.claude/CLAUDE.md is missing on this
+  machine, drop CLAUDE.core.md in before working.
+
+  Detail that used to live in this file now sits in path-scoped rules that load only when
+  Claude opens a matching file:
+      .claude/rules/php.md        → **/*.php
+      .claude/rules/testing.md    → tests/**
+      .claude/rules/frontend.md   → resources/**, webpack.mix.js
+
+  Removed as derivable from the codebase (per /doctor's trim criteria): the composer
+  package/version list, the per-module purpose table, and generic Laravel/PHP style rules
+  the current models already apply. Removed as irrelevant: the Laravel Cloud deployment note.
+-->
 
 ---
 
-## Behavioral Guidelines
+## Project-specific behavior
 
-These rules govern how Claude approaches every task. They reduce common LLM coding mistakes by biasing toward caution and precision over speed.
+The user-scope core rules apply in full. These are the additions for this repo.
 
-### 1. Think Before Coding
+**Ask me first:**
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
+- Changing `composer.json` or `package.json` dependencies
+- Creating a new top-level directory
+- Deleting or disabling an existing test
+- Running a migration or any write query against a non-local database
+- Toggling a row in the `modules` table (a disabled module silently loads nothing)
 
-Before implementing:
+**Don't ask, just do:** running tests, reading the DB, `route:list`, `config:show`, rebuilding
+assets, creating factories and seeders alongside a new model. These are reversible and follow
+from the request.
 
-- State assumptions explicitly. If uncertain, ask.
-- If multiple interpretations exist, present them — don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
-- If something is unclear, stop. Name what's confusing. Ask.
+**Don't write a verification script or a tinker snippet** to prove behavior that a test can
+cover. Write the test. Tinker is for inspecting state, not for demonstrating correctness.
 
-### 2. Simplicity First
+**Skills:** domain skills live in `**/skills/**`. Always look for skills that improve assigned tasks.
+`.claude/skills/` and `.agents/skills/` are identical Boost-generated copies (`boost:update`); don't edit them.
+Activate the relevant one when you start work in that domain, not after you get stuck.
 
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked.
-- No abstractions for single-use code.
-- No "flexibility" or "configurability" that wasn't requested.
-- No error handling for impossible scenarios.
-- If you write 200 lines and it could be 50, rewrite it.
-
-Ask: *Would a senior engineer say this is overcomplicated?* If yes, simplify.
-
-### 3. Surgical Changes
-
-**Touch only what you must. Clean up only your own mess.**
-
-When editing existing code:
-
-- Don't "improve" adjacent code, comments, or formatting.
-- Don't refactor things that aren't broken.
-- Match existing style, even if you'd do it differently.
-- If you notice unrelated dead code, mention it — don't delete it.
-
-When your changes create orphans:
-
-- Remove imports, variables, or functions that **your changes** made unused.
-- Don't remove pre-existing dead code unless explicitly asked.
-
-**The test:** Every changed line should trace directly to the user's request.
-
-### 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform tasks into verifiable goals:
-
-- "Add validation" → "Write tests for invalid inputs, then make them pass"
-- "Fix the bug" → "Write a test that reproduces it, then make it pass"
-- "Refactor X" → "Ensure tests pass before and after"
-
-For multi-step tasks, state a brief plan:
-
-```
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
-3. [Step] → verify: [check]
-```
-
-Strong success criteria allow independent looping. Weak criteria ("make it work") require constant clarification.
+**Don't overexplain:** I don't need to know every unnecessary detail. Don't give explanations of
+each step. Be straight and to the point. 
 
 ---
 
-**These guidelines are working when:** diffs have fewer unnecessary changes, there are fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+## What this is
 
----
+Laraship — a modular Laravel platform by Corals for marketplaces, e-commerce, directories,
+reservations, subscriptions, and classifieds. Modules are pluggable and registered from the
+database at runtime.
 
-## About Laraship
+### Version traps
 
-Laraship is a modular Laravel-based platform by Corals for building marketplaces, e-commerce, directories, reservation, subscription, and classified sites. Modules are pluggable and dynamically registered from the database.
+These differ from what you'd assume for a stock Laravel 13 app (`composer.json` `^13.0`). Check before writing code:
+
+- **Vue 2 + Vuex 3**, not Vue 3. Bootstrap 4 + jQuery 3.
+- **Laravel Mix (webpack)**, not Vite. Compiled assets land in `public/assets/`.
+- **Pre-Laravel-11 file structure on Laravel 13.** `bootstrap/app.php` is the classic one that
+  binds `App\Http\Kernel` / `App\Console\Kernel`; there is no `Application::configure()`
+  builder. Middleware in `app/Http/Kernel.php`, exceptions in `app/Exceptions/Handler.php`, schedule and commands in
+  `app/Console/Kernel.php`, rate limits in `RouteServiceProvider` or the HTTP kernel. This is
+  intentional and supported — don't migrate it unless I ask.
+- **PHPUnit**, not Pest. PHP 8.3.
+
+## Template workflow
+
+This project (`laraship-marketplace`) is the master template. New client projects (named `laraship-{name}`) are created by copying this entire project folder, then customizing modules/themes/features for that client. `resources/themes/marketplace-master` is the canonical theme reference (see `resources/themes/CLAUDE.md`).
+
+Consequences for a Claude session working here:
+- Changes made here do **not** automatically propagate to any already-copied client project — a fix or improvement made here (including to `CLAUDE.md` files) must be ported by hand to client projects that should also get it.
+- Conversely, don't pull a specific client's customizations back into this template unless they're genuinely reusable across future clients — this template should stay generic, not mirror one client's changes.
+- If asked to bootstrap a brand-new client project, the correct action is copying this entire project folder — not just `resources/themes/marketplace-master` — since the template covers modules, config, and everything else outside theming too.
+
+### Bootstrapping `laraship-{name}`
+
+1. Copy the project folder, **excluding** `.git`, `.env`, `auth.json`, `graphify-out/`,
+   `.phpunit.cache/`, `.phpunit.result.cache` and `storage/logs/*` (local state or secrets,
+   not template). Keep `vendor/` — it holds `vendor/corals/*`.
+2. `git init` a fresh repository for the client; never reuse the template's history.
+3. `cp .env.example .env`, then `php artisan key:generate` and set `APP_NAME`, `APP_URL` and
+   `DB_DATABASE=laraship_{name}` (plus the DB user/password).
+4. `cp auth.json.example auth.json`. Fill in credentials only once the project has its Laraship
+   license; until then install modules from Settings → Modules.
+5. Create the empty `laraship_{name}` database and run `php artisan corals:install`.
+6. Run `php artisan boost:update` to regenerate `AGENTS.md`, the Boost block below and the
+   skills copies, and rebuild `graphify-out/` with `/graphify` if you use it.
+
+Tests run against `laraship_{name}` too (see Commands), so run them after `corals:install`.
 
 ---
 
 ## Commands
 
-### Frontend
+```bash
+npm run watch                 # dev build, watching
+npm run production            # production build
 
-- **Dev build (watch):** `npm run watch` or `npm run dev`
-- **Production build:** `npm run production`
-- Uses **Laravel Mix** (webpack), NOT Vite. Compiled assets land in `public/assets/`.
+php artisan test --compact                                  # all
+php artisan test --compact tests/Feature/ExampleTest.php     # one file
+php artisan test --compact --filter=testName                 # by name
 
-### Testing
+php artisan corals:install                              # interactive install wizard
+php artisan make:module {ModuleName} {MainModel} [--modal]   # copies vendor/corals/foo/src to Corals/modules/{Name}; run from repo root
+php artisan corals:modules                              # module manager (recovery mode, minimal boot)
+```
 
-- Run all tests: `php artisan test --compact`
-- Run a single file: `php artisan test --compact tests/Feature/ExampleTest.php`
-- Filter by name: `php artisan test --compact --filter=testName`
-- Tests use a **real database** (not SQLite in-memory) — see `phpunit.xml`.
-
-### Custom Artisan Commands
-
-- `php artisan corals:install` — interactive installation wizard
-- `php artisan make:module {ModuleName} {MainModel} [--modal]` — scaffold a new module from the Foo template
-- `php artisan corals:modules` — module manager (runs in recovery mode, minimal boot)
+Tests run against the **database configured in `.env`** (`DB_DATABASE`), not SQLite in memory:
+`phpunit.xml` doesn't override it, and the app needs its seeded modules/settings. Feature tests
+isolate with `DatabaseTransactions` (rollback per test), so never use `RefreshDatabase`/
+`DatabaseMigrations` here — they would wipe that database. A failing test may be leftover state
+rather than your change.
 
 ---
 
 ## Architecture
 
-### Two-Tier Module System
+### Two-tier modules
 
-**Core modules** (`Corals/core/`) are always loaded via `CoralServiceProvider` → `FoundationServiceProvider`. They form the framework:
+**Core** (`Corals/core/`) always loads via `CoralServiceProvider` → `FoundationServiceProvider`:
+Foundation, User, Settings, Theme, Activity, Media, Menu, Utility.
 
-| Module | Purpose |
+**Dynamic** modules are registered at runtime by `Corals\Modules\ModulesServiceProvider`
+(`Corals/modules/ModulesServiceProvider.php`), which reads the `modules` table where `enabled=1`
+and registers each row's `provider`. A disabled module contributes nothing — no routes, no
+migrations, no views. If something "doesn't exist," check that table before concluding the code
+is missing.
+
+Dynamic modules live in two places:
+
+- **`vendor/corals/*`** — the installed modules (marketplace, subscriptions, cms, payment-*,
+  utility-*, …). Source is under `src/` (`src/Models`, `src/Http/Controllers`, `src/routes`,
+  `src/database`, `src/Providers`, …) with `module.json` at the package root. Each has its
+  own `composer.json`; the proprietary ones (Marketplace, Subscriptions, …) are wired into the
+  root `composer.json` `autoload.psr-4` and tracked in git (`!/vendor/corals` in `.gitignore`).
+  Some have their own `CLAUDE.md` — read it before editing that package.
+- **`Corals/modules/{Name}/`** — where `make:module` scaffolds *new* project-specific modules
+  (flat layout: `routes/`, `Models/`, `Http/Controllers/`, `module.json`, …).
+
+Proprietary modules (Marketplace, E-commerce, Subscriptions, Reservations) need a Laraship
+license to download from private repos. `auth.json` does not carry those credentials until the
+project goes to final hosting, so don't run `composer update` on them.
+`auth.json` is git-ignored; copy `auth.json.example` and fill in your own credentials.
+
+Modules can be installed/enabled by hand from the dashboard at Settings → Modules (or
+`php artisan corals:modules`); install Subscriptions before Marketplace.
+
+### Base classes to extend
+
+| For | Extend |
 |---|---|
-| `Foundation` | Base controllers, DataTables, hooks, helpers, API transformers, breadcrumbs |
-| `User` | Auth, roles, permissions, 2FA, social login |
-| `Settings` | Application settings, module management |
-| `Theme` | Multi-theme engine, view overrides per theme |
-| `Activity` | Spatie activity log integration |
-| `Media` | File/image management |
-| `Menu` | Dynamic navigation menus |
-| `Utility` | LOV (list of values), tags, categories, locations, comments, ratings, wishlists |
+| Admin controllers | `Corals\Foundation\Http\Controllers\BaseController` |
+| API endpoints | `APIBaseController` / `APIPublicController` |
+| List views (Yajra) | `Corals\Foundation\DataTables\BaseDataTable` |
+| Model policies | `Corals\Foundation\Policies\BasePolicy` |
+| API transformers | `Corals\Foundation\View\Transformers\Transformer` (League Fractal) |
 
-**Dynamic modules** (`Corals/modules/`) are registered at runtime by `ModulesServiceProvider`, which reads the `modules` DB table (`enabled=1`) and calls each module's service provider. A disabled module loads nothing.
+### Hook system
 
-Each module is a self-contained mini-app with its own: `routes/`, `resources/views/`, `database/migrations/`, `Models/`, `Http/Controllers/`, `DataTables/`, `Policies/`, `Transformers/`, and a `module.json` manifest.
-
-### Key Base Classes
-
-- `Corals\Foundation\Http\Controllers\BaseController` — extend for all admin controllers; sets theme, auth middleware, and shared view data.
-- `Corals\Foundation\Http\Controllers\APIBaseController` / `APIPublicController` — for API endpoints.
-- `Corals\Foundation\DataTables\BaseDataTable` — extend for all list views (Yajra DataTables).
-- `Corals\Foundation\Policies\BasePolicy` — base for all model policies.
-- `Corals\Foundation\View\Transformers\Transformer` — extends League Fractal; used for API resource transformation.
-
-### WordPress-style Hook System
-
-Two facades provide a WordPress-like event/filter system used extensively across modules:
+WordPress-style actions and filters, used heavily. Extend module behavior through these rather
+than editing core:
 
 ```php
-// Actions: fire-and-forget side effects
 Actions::add_action('hook_name', [$this, 'method'], $priority);
-Actions::dispatch('hook_name', [$arg1, $arg2]);
+Actions::do_action('hook_name', $arg1, $arg2);   // canonical; wraps dispatch($hook, [$args])
 
-// Filters: transform a value through a pipeline
 Filters::add_filter('hook_name', [$this, 'method'], $priority);
 $value = Filters::do_filter('hook_name', $value, ...$extraArgs);
 ```
 
-Use these to extend module behavior without modifying core code.
+### Themes
 
-### Theme System
-
-Themes live in `resources/themes/{theme-name}/`. The `Theme` facade resolves view paths so a theme can override any view. Admin themes are database-configurable per user session. Each theme has a `theme.json` manifest.
-
-### Frontend Stack
-
-- **Vue 2** + **Vuex 3** (not Vue 3)
-- **Bootstrap 4** + **jQuery 3**
-- **laravel-echo** + **socket.io** for real-time events
-- **axios** for HTTP
-- Build entry points are declared in `webpack.mix.js`
+`resources/themes/{theme-name}/`, each with a `theme.json`. The `Theme` facade resolves view
+paths, so any theme can override any view. Admin themes are DB-configurable per user session.
 
 ### URL IDs
 
-Public URLs use **Hashids** for hashed IDs. Use `hashids()->encode($id)` / `hashids()->decode($hash)` rather than exposing raw integer IDs.
+Public URLs use Hashids. Use `hashids()->encode($id)` / `hashids()->decode($hash)` — never expose
+raw integer IDs in a public route.
 
 ---
 
-## Laravel Boost Guidelines
+## Boost tools
 
-### Foundation Rules
+- `database-schema` — inspect table structure before writing a migration or model.
+- `database-query` — read-only queries, instead of raw SQL in tinker.
+- `get-absolute-url` — resolve scheme/domain/port. Use it before giving me any URL.
+- `browser-logs` — recent browser errors only; ignore stale entries.
+- `search-docs` — version-specific docs for the installed packages. Use it before calling a
+  package API you haven't verified in this session, and whenever behavior looks version-dependent.
+  Scope with a `packages` array. Query with broad topics, several at once:
+  `['rate limiting', 'routing rate limiting', 'routing']`. Don't put package names in the query
+  string — that's what `packages` is for. Words auto-stem and AND together; `"quoted phrases"`
+  match adjacent words in order.
 
-This application is a Laravel application. Main ecosystem packages and versions:
+**Tinker:** always single-quote to prevent shell expansion, double quotes for PHP strings inside:
+`php artisan tinker --execute 'User::where("active", true)->count();'`
 
-- php — 8.3
-- laravel/framework (LARAVEL) — v11
-- laravel/prompts (PROMPTS) — v0
-- laravel/sanctum (SANCTUM) — v4
-- laravel/socialite (SOCIALITE) — v5
-- livewire/livewire (LIVEWIRE) — v3
-- laravel/boost (BOOST) — v2
-- laravel/mcp (MCP) — v0
-- phpunit/phpunit (PHPUNIT) — v11
-- laravel-echo (ECHO) — v1
-- vue (VUE) — v2
+**Boost block below** (from `<laravel-boost-guidelines>` to the end) and `AGENTS.md` are generated
+by `php artisan boost:update`; don't hand-edit them. Where they conflict with the sections above,
+the sections above win — notably the Boost "Frontend Bundling" advice about Vite/`npm run build`
+doesn't apply (this project uses Mix: `npm run watch` / `npm run production`).
 
-### Skills Activation
+===
 
-This project has domain-specific skills available in `**/skills/**`. Activate the relevant skill whenever you work in that domain — don't wait until you're stuck.
+<laravel-boost-guidelines>
+=== foundation rules ===
 
-### Conventions
+# Laravel Boost Guidelines
 
-- Follow all existing code conventions. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
+## Foundational Context
+
+This application is a Laravel application running on PHP 8.3. Always use the APIs that match the installed major version of each package — do not assume a version.
+
+Before relying on a package's API, confirm its installed version:
+- PHP packages: run `composer show --direct` to list direct dependencies with versions, or `composer show <vendor/package>` for a single package.
+- JS packages: check `package.json` for the installed versions.
+
+## Skills Activation
+
+This project has domain-specific skills available in `**/skills/**`. You MUST activate the relevant skill whenever you work in that domain—don't wait until you're stuck.
+
+## Conventions
+
+- You must follow all existing code conventions used in this application. When creating or editing a file, check sibling files for the correct structure, approach, and naming.
 - Use descriptive names for variables and methods. For example, `isRegisteredForDiscounts`, not `discount()`.
 - Check for existing components to reuse before writing a new one.
 
-### Verification Scripts
+## Verification Scripts
 
-Don't create verification scripts or tinker when tests cover that functionality. Unit and feature tests are more important.
+- Do not create verification scripts or tinker when tests cover that functionality and prove they work. Unit and feature tests are more important.
 
-### Application Structure & Architecture
+## Application Structure & Architecture
 
 - Stick to existing directory structure; don't create new base folders without approval.
-- Do not change application dependencies without approval.
+- Do not change the application's dependencies without approval.
 
-### Frontend Bundling
+## Frontend Bundling
 
-If the user doesn't see a frontend change reflected in the UI, it could mean they need to run `npm run build`, `npm run dev`, or `composer run dev`. Ask them.
+- If a frontend change doesn't show in the UI or you get a "Unable to locate file in Vite manifest" error, run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
 
-### Documentation Files
+## Documentation Files
 
-Only create documentation files if explicitly requested by the user.
+- You must only create documentation files if explicitly requested by the user.
 
-### Replies
+=== boost rules ===
 
-Be concise in explanations — focus on what's important rather than explaining obvious details.
+# Laravel Boost
 
----
+## Tools
 
-## Boost Tools
-
+- Laravel Boost is an MCP server with tools designed specifically for this application. Prefer Boost tools over manual alternatives like shell commands or file reads.
 - Use `database-query` to run read-only queries against the database instead of writing raw SQL in tinker.
 - Use `database-schema` to inspect table structure before writing migrations or models.
 - Use `get-absolute-url` to resolve the correct scheme, domain, and port for project URLs. Always use this before sharing a URL with the user.
-- Use `browser-logs` to read browser logs, errors, and exceptions. Only recent logs are useful; ignore old entries.
+- Use `browser-logs` to read browser logs, errors, and exceptions. Only recent logs are useful, ignore old entries.
 
-### Searching Documentation (IMPORTANT)
+## Searching Documentation (IMPORTANT)
 
-- Always use `search-docs` before making code changes. Do not skip this step. It returns version-specific docs based on installed packages automatically.
+- Use `search-docs` before changes that depend on Laravel ecosystem APIs, behavior, configuration, or version-specific syntax. Skip it for copy-only edits and other changes where package documentation is irrelevant. Reuse sufficient results already in context instead of searching again.
 - Pass a `packages` array to scope results when you know which packages are relevant.
 - Use multiple broad, topic-based queries: `['rate limiting', 'routing rate limiting', 'routing']`. Expect the most relevant results first.
 - Do not add package names to queries because package info is already shared. Use `test resource table`, not `filament 4 test resource table`.
 
-**Search Syntax:**
+### Search Syntax
 
 1. Use words for auto-stemmed AND logic: `rate limit` matches both "rate" AND "limit".
 2. Use `"quoted phrases"` for exact position matching: `"infinite scroll"` requires adjacent words in order.
 3. Combine words and phrases for mixed queries: `middleware "rate limit"`.
 4. Use multiple queries for OR logic: `queries=["authentication", "middleware"]`.
 
-### Artisan
+## Project Rules
+
+- This project contains committed, area-grouped rules in `.ai/rules` when that directory exists, including path-scoped framework guidelines under `.ai/rules/boost`. Before you enter plan mode or create/edit any file, you MUST first: open @.ai/rules/index.md (it maps file globs to rule files), read every rule file whose globs cover the path(s) in scope, and run `grep -rin 'keyword' .ai/rules` to catch what a path match alone misses. Do not write code until you have read and are following every matching rule. If `.ai/rules` does not exist, continue without it.
+
+## Artisan
 
 - Run Artisan commands directly via the command line (e.g., `php artisan route:list`). Use `php artisan list` to discover available commands and `php artisan [command] --help` to check parameters.
 - Inspect routes with `php artisan route:list`. Filter with: `--method=GET`, `--name=users`, `--path=api`, `--except-vendor`, `--only-vendor`.
 - Read configuration values using dot notation: `php artisan config:show app.name`, `php artisan config:show database.default`. Or read config files directly from the `config/` directory.
 
-### Tinker
+## Tinker
 
-- Execute PHP in app context for debugging and testing code. Do not create models without user approval; prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
+- Execute PHP in app context for debugging and testing code. Do not create models without user approval, prefer tests with factories instead. Prefer existing Artisan commands over custom tinker code.
 - Always use single quotes to prevent shell expansion: `php artisan tinker --execute 'Your::code();'`
   - Double quotes for PHP strings inside: `php artisan tinker --execute 'User::where("active", true)->count();'`
 
----
+=== php rules ===
 
-## PHP
+# PHP
 
 - Always use curly braces for control structures, even for single-line bodies.
 - Use PHP 8 constructor property promotion: `public function __construct(public GitHub $github) { }`. Do not leave empty zero-parameter `__construct()` methods unless the constructor is private.
@@ -262,83 +306,57 @@ Be concise in explanations — focus on what's important rather than explaining 
 - Prefer PHPDoc blocks over inline comments. Only add inline comments for exceptionally complex logic.
 - Use array shape type definitions in PHPDoc blocks.
 
----
+=== deployments rules ===
 
-## Laravel 11
+# Deployment
 
-- **CRITICAL:** Always use `search-docs` for version-specific Laravel documentation and updated code examples.
-- This project upgraded from Laravel 10 without migrating to the new streamlined Laravel 11 file structure. This is perfectly fine and recommended by Laravel. Follow the existing Laravel 10 structure unless the user explicitly requests migration.
+- Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
 
-### Laravel 10 Structure
+=== laravel/core rules ===
 
-- Middleware typically lives in `app/Http/Middleware/`; service providers in `app/Providers/`.
-- There is no `bootstrap/app.php` application configuration in a Laravel 10 structure:
-  - Middleware registration: `app/Http/Kernel.php`
-  - Exception handling: `app/Exceptions/Handler.php`
-  - Console commands and schedule registration: `app/Console/Kernel.php`
-  - Rate limits: likely in `RouteServiceProvider` or `app/Http/Kernel.php`
+# Do Things the Laravel Way
 
-### Database
-
-- When modifying a column, the migration must include all attributes that were previously defined on it. Otherwise they will be dropped.
-- Laravel 11 allows limiting eagerly loaded records natively, without external packages: `$query->latest()->limit(10);`.
-
-### Models
-
-Casts can and likely should be set in a `casts()` method on a model rather than the `$casts` property. Follow existing conventions from other models.
-
-### New Artisan Commands
-
-- `php artisan make:enum`
-- `php artisan make:class`
-- `php artisan make:interface`
-
----
-
-## Do Things the Laravel Way
-
-- Use `php artisan make:` commands to create new files (migrations, controllers, models, etc.).
-- If creating a generic PHP class, use `php artisan make:class`.
-- Pass `--no-interaction` to all Artisan commands; also pass the correct `--options` to ensure correct behavior.
+- Use `php artisan make:` commands to create new files (i.e. migrations, controllers, models, etc.). You can list available Artisan commands using `php artisan list` and check their parameters with `php artisan [command] --help`.
+- If you're creating a generic PHP class, use `php artisan make:class`.
+- Pass `--no-interaction` to all Artisan commands to ensure they work without user input. You should also pass the correct `--options` to ensure correct behavior.
 
 ### Model Creation
 
-When creating new models, create useful factories and seeders too. Ask the user if they need anything else, using `php artisan make:model --help` to check available options.
+- When creating new models, create useful factories and seeders for them too. Ask the user if they need any other things, using `php artisan make:model --help` to check the available options.
 
-### APIs & Eloquent Resources
+## APIs & Eloquent Resources
 
-For APIs, default to Eloquent API Resources and API versioning unless existing API routes do not follow this pattern — then follow existing application convention.
+- For APIs, default to using Eloquent API Resources and API versioning unless existing API routes do not, then you should follow existing application convention.
 
-### URL Generation
+## URL Generation
 
-When generating links to other pages, prefer named routes and the `route()` function.
+- When generating links to other pages, prefer named routes and the `route()` function.
 
-### Testing
+## Testing
 
 - When creating models for tests, use the factories for the models. Check if the factory has custom states that can be used before manually setting up the model.
 - Faker: Use methods such as `$this->faker->word()` or `fake()->randomDigit()`. Follow existing conventions whether to use `$this->faker` or `fake()`.
-- When creating tests, use `php artisan make:test [options] {name}` for feature tests, or pass `--unit` for unit tests. Most tests should be feature tests.
+- When creating tests, make use of `php artisan make:test [options] {name}` to create a feature test, and pass `--unit` to create a unit test. Most tests should be feature tests.
 
----
+=== phpunit/core rules ===
 
-## PHPUnit
+# PHPUnit
 
-- This application uses PHPUnit for testing. All tests must be written as PHPUnit classes. Use `php artisan make:test --phpunit {name}` to create a new test.
-- If you see a test using "Pest", convert it to PHPUnit.
-- Every time a test has been updated, run that singular test.
-- When tests relating to your feature are passing, ask the user if they'd like to run the entire test suite to verify nothing is broken.
-- Tests should cover all happy paths, failure paths, and edge cases.
-- Do not remove any tests or test files without approval. These are core to the application.
+- This project uses PHPUnit. Create tests with `php artisan make:test --phpunit {name}`.
+- Do not include the test suite directory in `{name}`. Use `SomeFeatureTest`, not `Feature/SomeFeatureTest`.
+- Read the `testing-best-practices` skill for guidance on coverage, naming, structure, dependency isolation, and review.
 
-### Running Tests
+## Running Tests
 
-- Run the minimal number of tests, using an appropriate filter, before finalizing.
-- All tests: `php artisan test --compact`
-- Single file: `php artisan test --compact tests/Feature/ExampleTest.php`
-- Filter by name: `php artisan test --compact --filter=testName` (recommended after changing a related file)
+- Run the narrowest set of tests that covers the change. Pass a file path or `--filter=testName` to `php artisan test --compact`.
+- Rerun a test after each change to it.
+- Run `vendor/bin/phpunit` to call the test runner directly. It accepts the same file path and `--filter=testName` arguments.
 
----
+=== spatie/laravel-medialibrary/core rules ===
 
-## Deployment
+## Media Library
 
-Laravel can be deployed using [Laravel Cloud](https://cloud.laravel.com/), which is the fastest way to deploy and scale production Laravel applications.
+- `spatie/laravel-medialibrary` associates files with Eloquent models, with support for collections, conversions, and responsive images.
+- Always activate the `medialibrary-development` skill when working with media uploads, conversions, collections, responsive images, or any code that uses the `HasMedia` interface or `InteractsWithMedia` trait.
+
+</laravel-boost-guidelines>

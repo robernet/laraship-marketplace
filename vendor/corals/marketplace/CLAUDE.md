@@ -38,4 +38,4 @@ If `vendor/corals/marketplace` is ever moved or replaced, re-run `composer dump-
 - Follow `corals/marketplace`'s own `composer.json` (PSR-4 `Corals\Modules\Marketplace\` → `src`) — do not add a second autoload entry in the root project for this namespace.
 - Version/require changes belong in `vendor/corals/marketplace/composer.json`, not the root project's.
 - `module.json` (`folder: Marketplace`, `load_order: 601`) drives the Settings module manager's install/enable/disable/update UI — it is unrelated to Composer's own package resolution, just to the in-app "Modules" admin screen.
-- New admin routes/views/views overrides go through the same `Theme` facade mechanism described in the root `CLAUDE.md`.
+- New admin routes/view overrides go through the same `Theme` facade mechanism described in the root `CLAUDE.md`.
